@@ -177,6 +177,22 @@ def fetch_statuses():
 
 
 def main():
+    # Slack 疎通テスト（Run workflow の test_slack=true のときだけ）
+    if os.environ.get("TEST_SLACK", "").strip().lower() == "true":
+        msg = (
+            "✅ HYROX 大阪 2027 監視ツールのテスト通知です（"
+            + now_jst()
+            + " JST）。\nこの文面が届いていれば Slack 連携は正常です。"
+            "実際に空きが出たときも、同じチャンネルに通知します。"
+        )
+        try:
+            send_slack(msg)
+            print("[info] テスト通知を送信しました。")
+        except Exception as e:  # noqa
+            print(f"[error] テスト通知に失敗: {e}")
+            sys.exit(1)
+        return
+
     prev = load_state()
 
     # 一時的な失敗に備えて最大3回まで取得を試す

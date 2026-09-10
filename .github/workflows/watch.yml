@@ -4,7 +4,12 @@ on:
   schedule:
     # 5分おき（GitHub の都合で数分ずれる/間引かれることがあります＝ベストエフォート）
     - cron: "*/5 * * * *"
-  workflow_dispatch: {}   # 手動実行ボタン用
+  workflow_dispatch:      # 手動実行ボタン用
+    inputs:
+      test_slack:
+        description: "Slack通知のテスト送信だけ行う（空きチェックはしない）"
+        type: boolean
+        default: false
 
 concurrency:
   group: hyrox-watch
@@ -19,10 +24,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: リポジトリを取得
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Python を用意
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -35,6 +40,7 @@ jobs:
       - name: 空き状況をチェック
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          TEST_SLACK: ${{ inputs.test_slack }}
         run: python check_tickets.py
 
       - name: 状態の変化を保存（変わったときだけコミット）
