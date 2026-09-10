@@ -8,7 +8,11 @@ on:
   workflow_dispatch:      # 手動実行ボタン用
     inputs:
       test_slack:
-        description: "Slack通知のテスト送信だけ行う（空きチェックはしない）"
+        description: "Slack疎通テスト（シンプルな確認メッセージを送る）"
+        type: boolean
+        default: false
+      test_alert:
+        description: "空き検知通知の【見本】をSlackに送る（本番の見た目を確認）"
         type: boolean
         default: false
 
@@ -42,6 +46,7 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           TEST_SLACK: ${{ inputs.test_slack }}
+          TEST_ALERT: ${{ inputs.test_alert }}
         run: python check_tickets.py
 
       - name: 状態の変化を保存（変わったときだけコミット）

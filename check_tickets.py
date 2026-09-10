@@ -208,6 +208,29 @@ def main():
             sys.exit(1)
         return
 
+    # 「空き検知」通知の見本を送る（Run workflow の test_alert=true のときだけ）
+    if os.environ.get("TEST_ALERT", "").strip().lower() == "true":
+        sample = "\n".join([
+            "<!channel>",
+            "🧪 *【テスト送信】* 本番の「空き検知」通知はこのように届きます ↓↓↓",
+            "──────────────",
+            "🎟️ *HYROX 大阪 2027 空き検知！*",
+            f"次のカテゴリーで空き（再販）が出た可能性があります（{now_jst()} JST）:",
+            "　• *Doubles* が「完売」→「購入可能」に変化しました",
+            "",
+            f"👉 今すぐ確認 / 購入: {CHECKOUT_URL}",
+            "（※ Pro・障がい者部門も含む可能性があります。購入画面で種目をご確認ください）",
+            "──────────────",
+            "※これはテストです。実際に空きが出たわけではありません。本番も先頭に @channel が付き、チャンネル全員に通知が飛びます。",
+        ])
+        try:
+            send_slack(sample)
+            print("[info] 空き検知の見本（テスト）を送信しました。")
+        except Exception as e:  # noqa
+            print(f"[error] 見本テスト送信に失敗: {e}")
+            sys.exit(1)
+        return
+
     prev = load_state()
 
     # 一時的な失敗に備えて最大3回まで取得を試す
