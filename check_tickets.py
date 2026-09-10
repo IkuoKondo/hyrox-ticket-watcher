@@ -100,6 +100,21 @@ def now_jst():
     return datetime.datetime.now(JST).strftime("%Y-%m-%d %H:%M")
 
 
+def today_jst():
+    return datetime.datetime.now(JST).strftime("%Y-%m-%d")
+
+
+def month_jst():
+    return datetime.datetime.now(JST).strftime("%Y-%m")
+
+
+def status_summary(state):
+    label = {"soldout": "完売", "onsale": "購入可能", "unknown": "不明"}
+    return " / ".join(
+        f"{cat}={label.get(state.get(cat), '?')}" for cat in ALL_CATEGORIES
+    )
+
+
 def load_state():
     try:
         with open(STATE_FILE, "r", encoding="utf-8") as f:
@@ -232,7 +247,7 @@ def main():
     # 通知
     if opened:
         lines = [
-            "🎟️ *HYROX 大阪 2027 空き検知！*",
+            "<!channel> 🎟️ *HYROX 大阪 2027 空き検知！*",
             f"次のカテゴリーで空き（再販）が出た可能性があります（{now_jst()} JST）:",
         ]
         for cat in opened:
@@ -254,6 +269,27 @@ def main():
         st = statuses[cat]["status"]
         if st != "unknown":
             new_state[cat] = st
+
+    # 毎日ハートビート: state.json に変化を起こしてコミットを発生させ、
+    # GitHub の「60日間コミットなしで自動停止」ルールを自動で回避する
+    if new_state.get("_heartbeat_date") != today_jst():
+        new_state["_heartbeat_date"] = today_jst()
+
+    # 毎月1回、稼働中であることを Slack に投稿（ヘルスチェック）
+    if new_state.get("_last_reminder_month") != month_jst():
+        try:
+            send_slack(
+                "🟢 HYROX 大阪 2027 監視ツールは稼働中です（"
+                + today_jst()
+                + " JST）。\n現在の空き状況: "
+                + status_summary(new_state)
+                + "\n※これは毎月の自動ヘルスチェックです。毎月これが届いていれば正常稼働中です。"
+            )
+            new_state["_last_reminder_month"] = month_jst()
+            print("[info] 月次ヘルスチェックを Slack に送信しました。")
+        except Exception as e:  # noqa
+            print(f"[warn] 月次ヘルスチェックの送信に失敗（次回再試行）: {e}")
+
     save_state(new_state)
 
 

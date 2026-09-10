@@ -2,8 +2,9 @@ name: HYROX ticket watch
 
 on:
   schedule:
-    # 5分おき（GitHub の都合で数分ずれる/間引かれることがあります＝ベストエフォート）
-    - cron: "*/5 * * * *"
+    # 10分おき（GitHub の都合で数分ずれる/間引かれることがあります＝ベストエフォート）
+    # イベントが近づいたら "*/5 * * * *" に縮めてもOK（公開リポジトリなので費用は無料）
+    - cron: "*/10 * * * *"
   workflow_dispatch:      # 手動実行ボタン用
     inputs:
       test_slack:
